@@ -77,7 +77,7 @@
 <body>
     <main class="auth-shell">
         <a href="${pageContext.request.contextPath}/" class="brand">
-            <i class="fas fa-calendar-alt"></i> EventMS
+            <i class="fas fa-calendar-alt"></i> SeventMS
         </a>
 
         <c:choose>

@@ -773,7 +773,7 @@
     <nav class="nav-bar">
         <div class="nav-container">
             <a href="${pageContext.request.contextPath}/" class="nav-logo">
-                <i class="fas fa-calendar-alt"></i> EventMS
+                <i class="fas fa-calendar-alt"></i> SeventMS
             </a>
             <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false">
                 <i class="fas fa-bars"></i>

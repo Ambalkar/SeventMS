@@ -3,6 +3,6 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "java -jar target/SEVENT-MS.war"
+startCommand = "java -jar target/SeventMS.war"
 restartPolicyType = "ON_FAILURE"
 healthcheckPath = "/health"

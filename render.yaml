@@ -9,7 +9,7 @@ services:
     name: sevent-ms
     runtime: docker
     buildCommand: ./mvnw clean package -DskipTests
-    startCommand: java -jar target/SEVENT-MS.war
+    startCommand: java -jar target/SeventMS.war
     envVars:
       - key: DATABASE_URL
         fromDatabase:

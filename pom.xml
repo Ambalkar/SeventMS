@@ -16,7 +16,7 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>war</packaging>
 
-    <name>SEVENT-MS</name>
+    <name>SeventMS</name>
 
     <properties>
         <java.version>17</java.version>
@@ -114,7 +114,7 @@
     </dependencies>
 
     <build>
-        <finalName>SEVENT-MS</finalName>
+        <finalName>SeventMS</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
