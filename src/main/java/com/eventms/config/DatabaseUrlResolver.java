@@ -13,10 +13,10 @@ public final class DatabaseUrlResolver {
     }
 
     public static Map<String, String> fromEnvironment(Map<String, String> env) {
-        String datasourceUrl = blankToNull(env.get("SPRING_DATASOURCE_URL"));
         String databaseUrl = blankToNull(env.get("DATABASE_URL"));
-        String rawUrl = datasourceUrl != null ? datasourceUrl : databaseUrl;
-        String source = datasourceUrl != null ? "SPRING_DATASOURCE_URL" : "DATABASE_URL";
+        String datasourceUrl = blankToNull(env.get("SPRING_DATASOURCE_URL"));
+        String rawUrl = databaseUrl != null ? databaseUrl : datasourceUrl;
+        String source = databaseUrl != null ? "DATABASE_URL" : "SPRING_DATASOURCE_URL";
 
         Map<String, String> properties = new HashMap<>();
         if (rawUrl == null) {
