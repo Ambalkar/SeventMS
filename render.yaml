@@ -21,4 +21,8 @@ services:
         value: update
       - key: LOGGING_LEVEL_COM_EVENTMS
         value: INFO
+      - key: SPRING_SQL_INIT_MODE
+        value: always
+      - key: SPRING_SQL_INIT_SCHEMA_LOCATIONS
+        value: classpath:postgres_schema.sql
     autoDeploy: true
