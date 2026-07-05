@@ -1,4 +1,4 @@
-// Intercept fetch requests globally to inject Bearer token automatically
+// Intercept fetch requests globally to inject Bearer token automatically.
 (function() {
     const originalFetch = window.fetch;
     window.fetch = async function(resource, init) {
@@ -11,80 +11,93 @@
                 if (!init.headers.has('Authorization')) {
                     init.headers.set('Authorization', 'Bearer ' + token);
                 }
-            } else {
-                if (!init.headers['Authorization'] && !init.headers['authorization']) {
-                    init.headers['Authorization'] = 'Bearer ' + token;
-                }
+            } else if (!init.headers.Authorization && !init.headers.authorization) {
+                init.headers.Authorization = 'Bearer ' + token;
             }
         }
         return originalFetch(resource, init);
     };
 })();
 
-// Start performance tracking
-console.time("Navbar Initial Render");
-console.time("Navbar Verified Render");
-const initStartTime = performance.now();
-
+const AUTH_STORAGE_KEYS = ["token", "user"];
 let authPromise = null;
 
-async function checkAuth() {
-    // 1. Instant Cache-First Render
-    let initialUser = { authenticated: false };
-    if (localStorage.getItem("token")) {
-        try {
-            const cachedUserStr = localStorage.getItem("user");
-            if (cachedUserStr) {
-                initialUser = JSON.parse(cachedUserStr);
-                console.log("[Performance Audit] Loaded cached user session instantly:", initialUser);
-            }
-        } catch (e) {
-            console.warn("[Performance Audit] Failed to parse cached user:", e);
-        }
+function readCachedUser() {
+    const cachedUserStr = localStorage.getItem("user");
+    if (!cachedUserStr) {
+        return { authenticated: false };
     }
-    
-    // Render immediately from cache/fallback
-    renderNavbar(initialUser);
-    const initEndTime = performance.now();
-    console.timeEnd("Navbar Initial Render");
-    console.log(`[Performance Audit] Navbar rendered instantly in ${(initEndTime - initStartTime).toFixed(2)}ms.`);
+
+    try {
+        const cachedUser = JSON.parse(cachedUserStr);
+        return {
+            name: cachedUser.name || "",
+            email: cachedUser.email || "",
+            role: cachedUser.role || "USER",
+            authenticated: Boolean(cachedUser.authenticated)
+        };
+    } catch (error) {
+        return { authenticated: false };
+    }
+}
+
+function clearAuthStorage() {
+    AUTH_STORAGE_KEYS.forEach((key) => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+    });
+    clearAuthCookies();
+}
+
+function clearAuthCookies() {
+    const cookieNames = document.cookie
+        .split(";")
+        .map((cookie) => cookie.split("=")[0].trim())
+        .filter(Boolean);
+
+    cookieNames.forEach((name) => {
+        document.cookie = `${name}=; Max-Age=0; path=/`;
+        document.cookie = `${name}=; Max-Age=0; path=/; domain=${window.location.hostname}`;
+    });
+}
+
+function renderLoggedOutNavbar() {
+    renderNavbar({ authenticated: false });
+}
+
+async function checkAuth() {
+    renderLoggedOutNavbar();
 
     if (authPromise) return authPromise;
 
-    // 2. Async Background Network Verification
     authPromise = (async () => {
-        const netStartTime = performance.now();
         try {
-            const url = CONFIG.API_BASE_URL + '/api/auth/me';
-            const res = await fetch(url, { credentials: 'include' });
+            const res = await fetch(CONFIG.API_BASE_URL + '/api/auth/me', { credentials: 'include' });
             if (!res.ok) {
                 throw new Error("HTTP " + res.status);
             }
+
             const data = await res.json();
-            
-            // Sync status to cache
-            if (data.authenticated) {
-                localStorage.setItem("user", JSON.stringify({ 
-                    name: data.name, 
-                    email: data.email, 
-                    role: data.role, 
-                    authenticated: true 
+            if (data && data.authenticated) {
+                localStorage.setItem("user", JSON.stringify({
+                    name: data.name,
+                    email: data.email,
+                    role: data.role,
+                    authenticated: true
                 }));
-            } else {
-                localStorage.removeItem("user");
-                localStorage.removeItem("token");
+                renderNavbar(data);
+                return data;
             }
-            
-            renderNavbar(data);
-            const netEndTime = performance.now();
-            console.timeEnd("Navbar Verified Render");
-            console.log(`[Performance Audit] Network verification completed in ${(netEndTime - netStartTime).toFixed(2)}ms (Server Roundtrip).`);
-            return data;
+
+            clearAuthStorage();
+            renderLoggedOutNavbar();
+            return { authenticated: false };
         } catch (err) {
-            console.warn('[Performance Audit] Network verification failed, keeping cached view:', err);
-            const fallback = initialUser;
-            renderNavbar(fallback);
-            return fallback;
+            clearAuthStorage();
+            renderLoggedOutNavbar();
+            return { authenticated: false };
+        } finally {
+            authPromise = null;
         }
     })();
 
@@ -112,7 +125,7 @@ function renderNavbar(user) {
         </a>
     `;
 
-    if (user.authenticated) {
+    if (user && user.authenticated) {
         if (user.role === 'ADMIN') {
             html += `
                 <a href="admin.html" class="nav-link ${getActiveClass('admin.html')}">
@@ -140,19 +153,17 @@ function renderNavbar(user) {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            console.trace("LOGOUT CALLED");
             try {
-                const url = CONFIG.API_BASE_URL + '/api/auth/logout';
-                await fetch(url, { 
+                await fetch(CONFIG.API_BASE_URL + '/api/auth/logout', { 
                     method: 'POST',
                     credentials: 'include'
                 });
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                authPromise = null;
-                window.location.href = 'index.html';
             } catch (err) {
                 console.error('Logout error:', err);
+            } finally {
+                clearAuthStorage();
+                authPromise = null;
+                window.location.href = 'index.html';
             }
         });
     }
