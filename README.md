@@ -1,47 +1,62 @@
 # SEVENT-MS
 
-SEVENT-MS is a Java 17 web application for creating events, publishing them to users, and tracking event bookings. It is built with Spring Boot, JSP views, PostgreSQL, and Maven, and can run locally with Docker Compose, Maven, or the included Windows development script.
+SEVENT-MS is a Java 17 event management web application for creating events, publishing them to users, collecting bookings, and tracking registrations. It uses Spring Boot, JSP views, JDBC-based controllers, PostgreSQL, and Maven. The project also includes a simple frontend build, Docker support, and deployment files for common platforms.
 
-<img width="1440" height="852" alt="EMS landing page screenshot" src="https://github.com/user-attachments/assets/592c4b3a-fd5a-49fa-bf98-a1d423447eef" />
-<img width="1440" height="852" alt="EMS user events screenshot" src="https://github.com/user-attachments/assets/5ba8f13d-8f2a-4ee9-9c74-68bf80846994" />
-<img width="1440" height="852" alt="EMS admin dashboard screenshot" src="https://github.com/user-attachments/assets/b4ea4422-73ac-4238-af77-94cb223565df" />
-<img width="1440" height="852" alt="EMS bookings screenshot" src="https://github.com/user-attachments/assets/50df2b03-8362-41ae-93f9-36f7e856f08d" />
+## Screenshots
 
-## Features
+The latest local screenshots are stored in `uploads/images/events/` and are used here instead of the older remote images.
 
-- Public landing page with project and developer information.
-- User event catalog at `/user`.
-- Event booking with participant name, email, generated digital ID, and booking date.
-- "My Events" lookup at `/myEvents` by participant email.
-- Admin dashboard at `/admin` for managing event records and viewing bookings.
-- Simple events, major events, and sub-events.
-- Capacity tracking with "housefull" handling.
-- PostgreSQL schema for events and bookings.
-- Health check endpoint at `/health`.
-- Docker, Render, and Railway deployment files.
+<img src="uploads/images/events/Home.png" alt="SEVENT-MS home page" />
+<img src="uploads/images/events/UserHome.png" alt="SEVENT-MS user home page" />
+<img src="uploads/images/events/UserDashboard.png" alt="SEVENT-MS user dashboard" />
+<img src="uploads/images/events/BookedEvent.png" alt="SEVENT-MS booked event page" />
+<img src="uploads/images/events/SignUp%20page.png" alt="SEVENT-MS sign up page" />
+<img src="uploads/images/events/Admin.png" alt="SEVENT-MS admin dashboard" />
+
+## What The App Does
+
+- Public landing page with project and developer details.
+- User-facing event browsing and booking.
+- Admin event creation and management.
+- Event types including simple events, major events, and sub-events.
+- Booking records with participant name, email, booking date, and generated digital ID.
+- "My Events" lookup by participant email.
+- Image uploads for event branding and cards.
+- Health check endpoint for deployment platforms.
+
+## Main Features
+
+- Browse events from the user area at `/user`.
+- Book available events and store booking details in PostgreSQL.
+- Search a participant's bookings at `/myEvents`.
+- Manage events from the admin dashboard at `/admin`.
+- Upload event images that are stored under `uploads/images/events`.
+- Support for parent and child events through the `parent_event_id` relationship.
+- Capacity tracking with support for "housefull" behavior.
+- Local development support through Maven, Docker Compose, and `run-dev.bat`.
 
 ## Tech Stack
 
 - Java 17
-- Spring Boot 2.7.0
+- Spring Boot 2.7.x
 - Spring MVC
-- Spring Data JPA dependency with direct JDBC usage in controllers
-- Spring Security configured to permit all requests
 - JSP and JSTL
+- JDBC / direct SQL usage
 - PostgreSQL
 - Maven
 - Docker and Docker Compose
 
-## Project Structure
+## Project Layout
 
 ```text
 SEVENT-MS/
 |-- src/main/java/
 |   |-- com/eventms/
-|   |   |-- EventManagementSystemApplication.java
-|   |   |-- config/SecurityConfig.java
+|   |   |-- auth/
+|   |   |-- config/
 |   |   |-- controller/
-|   |   `-- repository/
+|   |   |-- service/
+|   |   `-- util/
 |   `-- com/example/eventmanagement/
 |       |-- model/
 |       |-- servlet/
@@ -49,19 +64,23 @@ SEVENT-MS/
 |-- src/main/resources/
 |   |-- application.properties
 |   |-- postgres_schema.sql
+|   |-- h2_schema.sql
 |   |-- database_schema.sql
 |   |-- database_setup.sql
 |   `-- import.sql
 |-- src/main/webapp/
 |   |-- WEB-INF/views/
 |   |   |-- admin_dashboard.jsp
+|   |   |-- auth.jsp
 |   |   |-- user_events.jsp
 |   |   |-- my_events.jsp
 |   |   `-- error.jsp
-|   |-- css/
 |   |-- images/
-|   |-- index.jsp
+|   |-- css/
 |   `-- documentation.jsp
+|-- uploads/
+|   `-- images/events/
+|-- frontend/
 |-- docker-compose.yml
 |-- Dockerfile
 |-- render.yaml
@@ -72,18 +91,34 @@ SEVENT-MS/
 
 ## Application Routes
 
-| Route | Description |
+| Route | Purpose |
 | --- | --- |
-| `/` | Landing page, forwarded to `index.jsp`. |
-| `/user` | Browse and book available events. |
-| `/myEvents` | Search bookings by participant email. |
-| `/admin` | Create, update, delete, and review events and bookings. |
+| `/` | Landing page. |
+| `/login` | User and admin login page. |
+| `/signup` | User registration page. |
+| `/user` | Browse available events and book them. |
+| `/myEvents` | Search bookings by email. |
+| `/admin` | Admin dashboard for managing events and bookings. |
 | `/documentation.jsp` | In-app documentation page. |
-| `/health` | Plain `OK` health check for deployment platforms. |
+| `/health` | Health check endpoint. |
 
-## Database
+## Authentication
 
-The default database is PostgreSQL. Runtime settings are read from environment variables with local defaults:
+The app has two separate credential paths:
+
+- Spring Security default user credentials, configured from environment variables in `application.properties`.
+- Custom admin login, which checks `admin.email` and `admin.password.hash`.
+
+Current defaults are defined in:
+
+- [`src/main/resources/application.properties`](src/main/resources/application.properties)
+- [`.env.example`](.env.example)
+
+## Configuration
+
+### Database
+
+The app reads database settings from environment variables with local defaults:
 
 ```properties
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/event_ms_db
@@ -92,22 +127,36 @@ SPRING_DATASOURCE_PASSWORD=postgres
 SPRING_PROFILES_ACTIVE=default
 ```
 
-The core schema is in `src/main/resources/postgres_schema.sql` and creates:
+### Security and Admin Settings
 
-- `events`: event metadata, capacity counts, event type, and optional parent event.
-- `bookings`: participant bookings linked to events, with a generated digital ID.
+```properties
+SPRING_SECURITY_USERNAME=admin
+SPRING_SECURITY_PASSWORD=admin
+ADMIN_EMAIL=admin@eventms.com
+ADMIN_PASSWORD_HASH=<bcrypt-hash>
+```
+
+### File Uploads
+
+Uploaded event images are written to:
+
+```text
+uploads/images/events/
+```
+
+These files are exposed through the app as `/images/events/**`.
 
 ## Local Development
 
 ### Prerequisites
 
-- Java JDK 17+
-- Maven, or the included Maven wrapper
-- PostgreSQL, Docker Compose, or the Windows H2 helper script
+- Java 17 or later
+- Maven or the included Maven wrapper
+- PostgreSQL, Docker Compose, or the Windows development script
 
 ### Option 1: Docker Compose
 
-This starts both the application and PostgreSQL.
+Start the app and PostgreSQL together:
 
 ```bash
 docker-compose up --build
@@ -119,9 +168,9 @@ Open:
 http://localhost:8080
 ```
 
-### Option 2: Maven with Local PostgreSQL
+### Option 2: Maven with PostgreSQL
 
-Create a PostgreSQL database named `event_ms_db`, then initialize the schema:
+Create a database named `event_ms_db`, then initialize the schema:
 
 ```bash
 psql -U postgres -d event_ms_db -f src/main/resources/postgres_schema.sql
@@ -142,7 +191,7 @@ http://localhost:8080
 
 ### Option 3: Windows Dev Script
 
-`run-dev.bat` builds the WAR, downloads H2 for local development, and starts the app on port `8081`.
+`run-dev.bat` builds the app, prepares local dependencies, and starts the application on port `8081`.
 
 ```bat
 run-dev.bat
@@ -154,29 +203,48 @@ Open:
 http://localhost:8081
 ```
 
-## Configuration
+## Database Schema
 
-Important environment variables:
+The main schema lives in `src/main/resources/postgres_schema.sql`.
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `PORT` | `8080` | Server port. |
-| `SPRING_PROFILES_ACTIVE` | `default` | Active Spring profile. |
-| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/event_ms_db` | JDBC database URL. |
-| `SPRING_DATASOURCE_USERNAME` | `postgres` | Database user. |
-| `SPRING_DATASOURCE_PASSWORD` | `postgres` | Database password. |
-| `SPRING_SECURITY_USERNAME` | `admin` | Default Spring security user, currently unused because all routes are permitted. |
-| `SPRING_SECURITY_PASSWORD` | `admin` | Default Spring security password, currently unused because all routes are permitted. |
+Core tables include:
 
-See `.env.example` for deployment-oriented values.
+- `events`
+- `bookings`
+- `app_users`
+
+The `events` table stores:
+
+- event name
+- event date
+- location
+- description
+- capacity limit
+- current attendee count
+- event type
+- parent event relationship
+- image path
+
+The `bookings` table stores:
+
+- participant name
+- participant email
+- event reference
+- booking type
+- generated digital ID
+- booking timestamp
+
+The `app_users` table is created on demand for user signup and login.
 
 ## Build
+
+Create the WAR file:
 
 ```bash
 ./mvnw.cmd clean package -DskipTests
 ```
 
-The packaged application is created at:
+The output is created at:
 
 ```text
 target/SEVENT-MS.war
@@ -197,31 +265,43 @@ docker run -p 8080:8080 \
 
 ### Render
 
-This repository includes `render.yaml` and a Dockerfile. For Render:
+This repository includes `render.yaml` and a `Dockerfile`.
+
+Steps:
 
 1. Create or connect a PostgreSQL database.
-2. Create a web service from this repository.
-3. Use Docker runtime.
-4. Set the datasource environment variables from `.env.example`.
-5. Run `src/main/resources/postgres_schema.sql` against the production database if the tables do not already exist.
+2. Create a web service from the repository.
+3. Use the Docker runtime.
+4. Set environment variables from `.env.example`.
+5. Run `src/main/resources/postgres_schema.sql` if the tables are not already present.
 
-Health check:
+### AWS
 
-```text
-/health
-```
+Use the guidance in `AWS_DEPLOYMENT.md` for App Runner, ECR, and RDS setup.
 
 ## Notes
 
-- The app currently permits all requests in `SecurityConfig`, including `/admin`.
-- Controllers mostly use `DataSource`, `Connection`, and prepared SQL directly.
-- `spring.jpa.hibernate.ddl-auto=update` is enabled, but the checked-in SQL schema is still the clearest source for the database tables expected by the controllers.
-- `target/` contains generated build output and should not be edited manually.
+- `SecurityConfig` currently permits all requests.
+- The controllers use `DataSource`, `Connection`, and prepared SQL directly instead of a full repository/service split.
+- Uploaded images live on the container filesystem by default, so durable storage should be planned for production.
+- `spring.jpa.hibernate.ddl-auto=update` is enabled, but the SQL schema files remain the clearest source of truth for table structure.
+- The `uploads/` folder is part of the running application state and may contain user-generated assets.
+
+## Files To Know
+
+- [`src/main/resources/application.properties`](src/main/resources/application.properties)
+- [`src/main/resources/postgres_schema.sql`](src/main/resources/postgres_schema.sql)
+- [`src/main/java/com/eventms/controller/AdminController.java`](src/main/java/com/eventms/controller/AdminController.java)
+- [`src/main/java/com/eventms/controller/AuthController.java`](src/main/java/com/eventms/controller/AuthController.java)
+- [`src/main/java/com/eventms/controller/ApiAuthController.java`](src/main/java/com/eventms/controller/ApiAuthController.java)
+- [`src/main/java/com/eventms/config/WebConfig.java`](src/main/java/com/eventms/config/WebConfig.java)
+- [`src/main/java/com/eventms/config/SecurityConfig.java`](src/main/java/com/eventms/config/SecurityConfig.java)
 
 ## Future Improvements
 
-- Add admin authentication and CSRF protection before public production use.
-- Add automated tests for booking capacity and major/sub-event behavior.
-- Move direct SQL operations into service/repository layers.
-- Add duplicate-booking feedback for the existing `(user_email, event_id)` uniqueness constraint.
-- Add migrations with Flyway or Liquibase.
+- Add real admin authorization and route protection.
+- Add CSRF protection for browser flows.
+- Add automated tests around bookings and capacity limits.
+- Move direct SQL access into service/repository layers.
+- Add upload storage to S3 or another durable object store.
+- Add migration tooling such as Flyway or Liquibase.
