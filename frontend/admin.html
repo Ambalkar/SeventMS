@@ -165,6 +165,22 @@
             color: #000;
         }
 
+        .btn-edit {
+            background: rgba(45, 212, 191, 0.1);
+            color: var(--color-accent-teal);
+            border: 1px solid rgba(45, 212, 191, 0.25);
+            padding: 0.4rem 0.6rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 0.35rem;
+        }
+
+        .btn-edit:hover {
+            background: var(--color-accent-teal);
+            color: #000;
+        }
+
         .sub-event-list-dash {
             list-style: none;
             padding-left: 1.25rem;
@@ -519,6 +535,9 @@
                             <td>${event.currentGuests} / ${event.guestLimit}</td>
                             <td><span style="color:${event.eventType === 'MAJOR' ? 'var(--color-accent-gold)' : 'var(--color-accent-teal)'}; font-weight:600;">${typeLabel}</span></td>
                             <td>
+                                <button class="btn-edit" onclick="startEditEvent(${JSON.stringify(event).replaceAll('"', '&quot;')})">
+                                    <i class="far fa-edit"></i> Edit
+                                </button>
                                 <button class="btn-delete" onclick="deleteEvent(${event.id})">
                                     <i class="far fa-trash-alt"></i> Delete
                                 </button>
@@ -576,36 +595,59 @@
             }
         }
 
-        // Form Submission Add Event
         const addForm = document.getElementById('addEventForm');
+        const addFormSubmitBtn = addForm.querySelector('button[type="submit"]');
+        let editingEventId = null;
+
+        function startEditEvent(event) {
+            editingEventId = event.id;
+            document.getElementById('eventName').value = event.name || '';
+            document.getElementById('eventDate').value = event.date || '';
+            document.getElementById('eventLimit').value = event.guestLimit || '';
+            document.getElementById('eventLocation').value = event.location || '';
+            document.getElementById('eventDesc').value = event.description || '';
+            document.getElementById('eventType').value = event.eventType === 'MAJOR' ? 'MAJOR' : 'SIMPLE';
+            document.getElementById('eventImage').value = '';
+            addFormSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Update Event';
+            addForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function resetEditMode() {
+            editingEventId = null;
+            addForm.reset();
+            addFormSubmitBtn.innerHTML = 'Save Event';
+        }
+
+        // Form Submission Add Event
         addForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const submitBtn = addForm.querySelector('button[type="submit"]');
+            const submitBtn = addFormSubmitBtn;
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
             const formData = new FormData(addForm);
 
             try {
-                const res = await fetch(CONFIG.API_BASE_URL + '/api/admin/events', {
-                    method: 'POST',
+                const isEdit = editingEventId !== null;
+                const res = await fetch(CONFIG.API_BASE_URL + (isEdit ? `/api/admin/events/${editingEventId}` : '/api/admin/events'), {
+                    method: isEdit ? 'PUT' : 'POST',
                     body: formData,
                     credentials: 'include'
                 });
                 const result = await res.json();
                 if (res.ok && result.success) {
-                    alert(result.message || 'Event created.');
-                    addForm.reset();
+                    alert(result.message || (isEdit ? 'Event updated.' : 'Event created.'));
+                    resetEditMode();
                     loadDashboard();
                 } else {
-                    alert(result.message || 'Failed to create event.');
+                    alert(result.message || (isEdit ? 'Failed to update event.' : 'Failed to create event.'));
                 }
             } catch (err) {
                 console.error(err);
                 alert('Network error submitting event form.');
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Save Event';
+                submitBtn.innerHTML = editingEventId ? 'Update Event' : 'Save Event';
             }
         });
 

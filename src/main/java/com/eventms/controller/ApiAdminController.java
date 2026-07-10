@@ -222,6 +222,85 @@ public class ApiAdminController {
         }
     }
 
+    @PutMapping(value = "/events/{id}", consumes = "multipart/form-data")
+    public ResponseEntity<?> updateEvent(
+            @PathVariable("id") int id,
+            @RequestParam("name") String name,
+            @RequestParam("date") String date,
+            @RequestParam("location") String location,
+            @RequestParam("description") String description,
+            @RequestParam("guest_limit") Integer guestLimit,
+            @RequestParam(value = "event_type", defaultValue = "SIMPLE") String eventType,
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            HttpSession session) {
+
+        if (!isAdmin(session)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("success", false, "message", "Unauthorized."));
+        }
+
+        try (Connection conn = dataSource.getConnection()) {
+            ensureEventHierarchyColumns(conn);
+            conn.setAutoCommit(false);
+
+            if (name == null || name.isBlank() || date == null || date.isBlank() || location == null || location.isBlank() || guestLimit == null || guestLimit < 1) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", "Name, date, location, and guest limit are required."));
+            }
+
+            String normalizedType = "MAJOR".equalsIgnoreCase(eventType) ? "MAJOR" : "SIMPLE";
+            Integer parentEventId = null;
+            int currentGuests = 0;
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT current_guests, parent_event_id FROM events WHERE event_id = ? FOR UPDATE")) {
+                ps.setInt(1, id);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("success", false, "message", "Event not found."));
+                    }
+                    currentGuests = rs.getInt("current_guests");
+                    parentEventId = rs.getObject("parent_event_id") == null ? null : rs.getInt("parent_event_id");
+                }
+            }
+
+            if (guestLimit < currentGuests) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", "Guest limit cannot be lower than current bookings (" + currentGuests + ")."));
+            }
+
+            if ("MAJOR".equals(normalizedType)) {
+                int subTotal = getSubGuestLimitTotal(conn, id, null);
+                if (guestLimit < subTotal) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", "Major event guest limit cannot be lower than combined sub-event limits (" + subTotal + ")."));
+                }
+            } else if (parentEventId != null) {
+                validateSubEventCapacity(conn, parentEventId, id, guestLimit);
+            }
+
+            String imagePath = saveEventImage(image);
+            String sql = imagePath == null
+                    ? "UPDATE events SET name = ?, date = ?, location = ?, description = ?, guest_limit = ?, event_type = ? WHERE event_id = ?"
+                    : "UPDATE events SET name = ?, date = ?, location = ?, description = ?, guest_limit = ?, event_type = ?, image_path = ? WHERE event_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, name);
+                ps.setDate(2, java.sql.Date.valueOf(date));
+                ps.setString(3, location);
+                ps.setString(4, description);
+                ps.setInt(5, guestLimit);
+                ps.setString(6, normalizedType);
+                if (imagePath == null) {
+                    ps.setInt(7, id);
+                } else {
+                    ps.setString(7, imagePath);
+                    ps.setInt(8, id);
+                }
+                ps.executeUpdate();
+            }
+
+            conn.commit();
+            return ResponseEntity.ok(Map.of("success", true, "message", "Event updated successfully."));
+        } catch (SQLException | IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success", false, "message", "Error: " + e.getMessage()));
+        }
+    }
+
     @PostMapping("/events/sub")
     public ResponseEntity<?> addSubEvent(
             @RequestParam("parent_event_id") Integer parentEventId,
