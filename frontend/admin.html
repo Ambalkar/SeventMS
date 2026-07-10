@@ -181,6 +181,12 @@
             color: #000;
         }
 
+        .btn-edit-sub {
+            padding: 0.25rem 0.5rem;
+            margin-left: 0.5rem;
+            font-size: 0.8rem;
+        }
+
         .btn-secondary {
             background: rgba(255, 255, 255, 0.04);
             color: var(--color-text-primary);
@@ -261,6 +267,10 @@
         .sub-event-list-dash li {
             position: relative;
             margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
         }
 
         .sub-event-list-dash li::before {
@@ -633,7 +643,14 @@
                     
                     let subEventsText = '';
                     if (event.subEvents && event.subEvents.length > 0) {
-                        subEventsText = `<ul class="sub-event-list-dash">${event.subEvents.map(s => `<li>${s.name} (${s.currentGuests}/${s.guestLimit})</li>`).join('')}</ul>`;
+                        subEventsText = `<ul class="sub-event-list-dash">${event.subEvents.map(s => `
+                            <li>
+                                <span>${s.name} (${s.currentGuests}/${s.guestLimit})</span>
+                                <button class="btn-edit btn-edit-sub" type="button" data-event='${encodeURIComponent(JSON.stringify(s))}'>
+                                    <i class="far fa-edit"></i> Edit
+                                </button>
+                            </li>
+                        `).join('')}</ul>`;
                     }
 
                     return `
