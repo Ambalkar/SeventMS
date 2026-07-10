@@ -181,6 +181,75 @@
             color: #000;
         }
 
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
+            padding: 0.4rem 0.6rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.72);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 1000;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal {
+            width: min(680px, 100%);
+            background: linear-gradient(145deg, rgba(20, 23, 28, 0.99), rgba(7, 8, 10, 0.98));
+            border: 1px solid var(--color-border);
+            border-radius: 18px;
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+        }
+
+        .modal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .modal-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .sub-event-list-dash {
             list-style: none;
             padding-left: 1.25rem;
@@ -318,11 +387,12 @@
                                     <th>Event Booked</th>
                                     <th>Check-in ID</th>
                                     <th>Type</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody id="bookingsTableBody">
                                 <tr>
-                                    <td colspan="5" style="text-align:center; color: var(--color-text-secondary);">
+                                    <td colspan="6" style="text-align:center; color: var(--color-text-secondary);">
                                         <i class="fas fa-spinner fa-spin"></i> Loading bookings...
                                     </td>
                                 </tr>
@@ -334,52 +404,14 @@
 
             <!-- Right Column: Create Forms -->
             <div>
-                <!-- Add Event Form -->
                 <section class="section-shell">
                     <h2><i class="fas fa-plus-circle"></i> Create Event</h2>
-                    <form id="addEventForm" enctype="multipart/form-data">
-                        <div class="form-group">
-                            <label class="form-label" for="eventName">Name</label>
-                            <input id="eventName" name="name" type="text" required>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label" for="eventDate">Date</label>
-                                <input id="eventDate" name="date" type="date" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="eventLimit">Guest Limit</label>
-                                <input id="eventLimit" name="guest_limit" type="number" min="1" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="eventLocation">Location</label>
-                            <input id="eventLocation" name="location" type="text" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="eventDesc">Description</label>
-                            <textarea id="eventDesc" name="description" rows="3"></textarea>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label" for="eventType">Event Type</label>
-                                <select id="eventType" name="event_type">
-                                    <option value="SIMPLE">Simple Event</option>
-                                    <option value="MAJOR">Major Event</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="eventImage">Image File (1700 x 950 px recommended)</label>
-                                <input id="eventImage" name="image" type="file" accept="image/*">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary" style="width: 100%; min-height: 44px; margin-top: 1rem;">
-                            Save Event
-                        </button>
-                    </form>
+                    <p style="color: var(--color-text-secondary); margin-top: 0;">Use the button below to create a new event or edit an existing one.</p>
+                    <button type="button" class="btn btn-primary" id="openEventModalBtn" style="width: 100%; min-height: 44px; margin-top: 1rem;">
+                        <i class="fas fa-plus"></i> New Event
+                    </button>
                 </section>
 
-                <!-- Add Sub-Event Form -->
                 <section class="section-shell">
                     <h2><i class="fas fa-folder-plus"></i> Add Sub-Event</h2>
                     <form id="addSubEventForm" enctype="multipart/form-data">
@@ -421,6 +453,86 @@
                     </form>
                 </section>
             </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="eventModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="eventModalTitle">Edit Event</h3>
+                <button type="button" class="btn-secondary" id="closeEventModalBtn">Close</button>
+            </div>
+            <form id="addEventForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label class="form-label" for="eventName">Name</label>
+                    <input id="eventName" name="name" type="text" required>
+                </div>
+                <div class="modal-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="eventDate">Date</label>
+                        <input id="eventDate" name="date" type="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="eventLimit">Guest Limit</label>
+                        <input id="eventLimit" name="guest_limit" type="number" min="1" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="eventLocation">Location</label>
+                    <input id="eventLocation" name="location" type="text" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="eventDesc">Description</label>
+                    <textarea id="eventDesc" name="description" rows="3"></textarea>
+                </div>
+                <div class="modal-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="eventType">Event Type</label>
+                        <select id="eventType" name="event_type">
+                            <option value="SIMPLE">Simple Event</option>
+                            <option value="MAJOR">Major Event</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="eventImage">Image File (1700 x 950 px recommended)</label>
+                        <input id="eventImage" name="image" type="file" accept="image/*">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelEventEditBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="eventSubmitBtn">Save Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="bookingModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Edit Participant</h3>
+                <button type="button" class="btn-secondary" id="closeBookingModalBtn">Close</button>
+            </div>
+            <form id="bookingForm">
+                <input type="hidden" id="bookingId" name="booking_id">
+                <div class="modal-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="bookingName">Participant Name</label>
+                        <input id="bookingName" name="user_name" type="text" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="bookingEmail">Participant Email</label>
+                        <input id="bookingEmail" name="user_email" type="email" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="bookingDigitalId">Digital ID</label>
+                    <input id="bookingDigitalId" name="digital_id" type="text" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelBookingEditBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="bookingSubmitBtn">Save Participant</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -535,7 +647,7 @@
                             <td>${event.currentGuests} / ${event.guestLimit}</td>
                             <td><span style="color:${event.eventType === 'MAJOR' ? 'var(--color-accent-gold)' : 'var(--color-accent-teal)'}; font-weight:600;">${typeLabel}</span></td>
                             <td>
-                                <button class="btn-edit" onclick="startEditEvent(${JSON.stringify(event).replaceAll('"', '&quot;')})">
+                                <button class="btn-edit" type="button" data-event='${encodeURIComponent(JSON.stringify(event))}'>
                                     <i class="far fa-edit"></i> Edit
                                 </button>
                                 <button class="btn-delete" onclick="deleteEvent(${event.id})">
@@ -561,6 +673,11 @@
                             <td>${b.eventName} <span style="font-size:0.8rem; color:var(--color-text-secondary); display:block;">(${b.eventDate})</span></td>
                             <td style="font-family:monospace; font-size:0.85rem; color:var(--color-accent-teal);">${b.digitalId}</td>
                             <td><span style="font-size: 0.8rem; font-weight:600; color:${isMajor ? 'var(--color-accent-gold)' : 'var(--color-accent-teal)'};">${isMajor ? 'Major Pass' : 'Sub Seat'}</span></td>
+                            <td>
+                                <button class="btn-secondary" type="button" data-booking='${encodeURIComponent(JSON.stringify(b))}'>
+                                    <i class="far fa-edit"></i> Edit
+                                </button>
+                            </td>
                         </tr>
                     `;
                 }).join('');
@@ -595,9 +712,14 @@
             }
         }
 
+        const eventModal = document.getElementById('eventModal');
+        const bookingModal = document.getElementById('bookingModal');
         const addForm = document.getElementById('addEventForm');
-        const addFormSubmitBtn = addForm.querySelector('button[type="submit"]');
+        const addFormSubmitBtn = document.getElementById('eventSubmitBtn');
+        const bookingForm = document.getElementById('bookingForm');
+        const bookingSubmitBtn = document.getElementById('bookingSubmitBtn');
         let editingEventId = null;
+        let editingBookingId = null;
 
         function startEditEvent(event) {
             editingEventId = event.id;
@@ -608,15 +730,65 @@
             document.getElementById('eventDesc').value = event.description || '';
             document.getElementById('eventType').value = event.eventType === 'MAJOR' ? 'MAJOR' : 'SIMPLE';
             document.getElementById('eventImage').value = '';
-            addFormSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Update Event';
-            addForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('eventModalTitle').textContent = `Edit Event #${event.id}`;
+            addFormSubmitBtn.innerHTML = 'Update Event';
+            eventModal.classList.add('open');
         }
 
         function resetEditMode() {
             editingEventId = null;
             addForm.reset();
             addFormSubmitBtn.innerHTML = 'Save Event';
+            document.getElementById('eventModalTitle').textContent = 'Create Event';
+            eventModal.classList.remove('open');
         }
+
+        function startEditBooking(booking) {
+            editingBookingId = booking.id;
+            document.getElementById('bookingModal').dataset.eventName = booking.eventName || '';
+            document.getElementById('bookingId').value = booking.id || '';
+            document.getElementById('bookingName').value = booking.userName || '';
+            document.getElementById('bookingEmail').value = booking.userEmail || '';
+            document.getElementById('bookingDigitalId').value = booking.digitalId || '';
+            document.querySelector('#bookingModal h3').textContent = `Edit Participant for ${booking.eventName || 'Booking'}`;
+            bookingSubmitBtn.innerHTML = 'Update Participant';
+            bookingModal.classList.add('open');
+        }
+
+        function resetBookingEditMode() {
+            editingBookingId = null;
+            bookingForm.reset();
+            bookingSubmitBtn.innerHTML = 'Save Participant';
+            document.querySelector('#bookingModal h3').textContent = 'Edit Participant';
+            bookingModal.classList.remove('open');
+        }
+
+        document.addEventListener('click', (e) => {
+            const eventBtn = e.target.closest('button[data-event]');
+            if (eventBtn) {
+                startEditEvent(JSON.parse(decodeURIComponent(eventBtn.dataset.event)));
+                return;
+            }
+
+            const bookingBtn = e.target.closest('button[data-booking]');
+            if (bookingBtn) {
+                startEditBooking(JSON.parse(decodeURIComponent(bookingBtn.dataset.booking)));
+            }
+        });
+
+        document.getElementById('closeEventModalBtn').addEventListener('click', resetEditMode);
+        document.getElementById('cancelEventEditBtn').addEventListener('click', resetEditMode);
+        document.getElementById('closeBookingModalBtn').addEventListener('click', resetBookingEditMode);
+        document.getElementById('cancelBookingEditBtn').addEventListener('click', resetBookingEditMode);
+        document.getElementById('openEventModalBtn').addEventListener('click', () => {
+            editingEventId = null;
+            addForm.reset();
+            document.getElementById('eventModalTitle').textContent = 'Create Event';
+            addFormSubmitBtn.innerHTML = 'Save Event';
+            eventModal.classList.add('open');
+        });
+        eventModal.addEventListener('click', (e) => { if (e.target === eventModal) resetEditMode(); });
+        bookingModal.addEventListener('click', (e) => { if (e.target === bookingModal) resetBookingEditMode(); });
 
         // Form Submission Add Event
         addForm.addEventListener('submit', async (e) => {
@@ -648,6 +820,37 @@
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = editingEventId ? 'Update Event' : 'Save Event';
+            }
+        });
+
+        bookingForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = bookingSubmitBtn;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            const formData = new FormData(bookingForm);
+
+            try {
+                const res = await fetch(CONFIG.API_BASE_URL + `/api/admin/bookings/${editingBookingId}`, {
+                    method: 'PUT',
+                    body: formData,
+                    credentials: 'include'
+                });
+                const result = await res.json();
+                if (res.ok && result.success) {
+                    alert(result.message || 'Participant updated.');
+                    resetBookingEditMode();
+                    loadDashboard();
+                } else {
+                    alert(result.message || 'Failed to update participant.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Network error submitting participant form.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Save Participant';
             }
         });
 

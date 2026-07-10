@@ -381,6 +381,41 @@ public class ApiAdminController {
         }
     }
 
+    @PutMapping("/bookings/{id}")
+    public ResponseEntity<?> updateBooking(
+            @PathVariable("id") int id,
+            @RequestParam("user_name") String userName,
+            @RequestParam("user_email") String userEmail,
+            @RequestParam("digital_id") String digitalId,
+            HttpSession session) {
+
+        if (!isAdmin(session)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("success", false, "message", "Unauthorized."));
+        }
+
+        if (userName == null || userName.isBlank() || userEmail == null || userEmail.isBlank() || digitalId == null || digitalId.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", "Participant name, email, and digital ID are required."));
+        }
+
+        try (Connection conn = dataSource.getConnection()) {
+            ensureEventHierarchyColumns(conn);
+            String sql = "UPDATE bookings SET user_name = ?, user_email = ?, digital_id = ? WHERE booking_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, userName.trim());
+                ps.setString(2, userEmail.trim());
+                ps.setString(3, digitalId.trim());
+                ps.setInt(4, id);
+                int updated = ps.executeUpdate();
+                if (updated == 0) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("success", false, "message", "Booking not found."));
+                }
+            }
+            return ResponseEntity.ok(Map.of("success", true, "message", "Participant details updated successfully."));
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success", false, "message", "Database error: " + e.getMessage()));
+        }
+    }
+
     private void ensureEventHierarchyColumns(Connection conn) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(
                 "ALTER TABLE events ADD COLUMN IF NOT EXISTS event_type VARCHAR(20) NOT NULL DEFAULT 'SIMPLE'")) {
