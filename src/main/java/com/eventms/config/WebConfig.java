@@ -19,15 +19,25 @@ public class WebConfig implements WebMvcConfigurer {
         if (!uploadPath.endsWith("/")) {
             uploadPath += "/";
         }
+        // Serve uploaded event images from the filesystem and enable a short cache period
         registry.addResourceHandler("/images/events/**")
-                .addResourceLocations(uploadPath);
+                .addResourceLocations(uploadPath)
+                .setCachePeriod(3600); // cache for 1 hour (seconds)
     }
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        // Allow CORS for API endpoints
         registry.addMapping("/api/**")
                 .allowedOriginPatterns("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true);
+
+        // Also allow cross-origin requests for static image resources (frontend on Vercel will request images from backend)
+        registry.addMapping("/images/**")
+                .allowedOriginPatterns("*")
+                .allowedMethods("GET", "HEAD", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
     }

@@ -511,8 +511,8 @@
 
         function renderEventCard(event) {
             const imageHtml = event.imagePath 
-                ? `<img src="${CONFIG.API_BASE_URL}${event.imagePath}" alt="${event.name}" class="event-image" onerror="this.src='images/eventbg0.jpg'">`
-                : `<img src="images/eventbg0.jpg" alt="${event.name}" class="event-image">`;
+                            ? `<img src="${CONFIG.API_BASE_URL}${event.imagePath}" alt="${event.name}" class="event-image" loading="lazy" onerror="this.src='images/eventbg0.jpg'">`
+                            : `<img src="images/eventbg0.jpg" alt="${event.name}" class="event-image" loading="lazy">`;
 
             const kindLabel = event.eventType === 'MAJOR' ? 'Major Event' : 'Simple Event';
             const kindClass = event.eventType === 'MAJOR' ? 'event-kind' : 'event-kind'; // same styling class name
@@ -562,8 +562,8 @@
 
         function renderSubEventCard(sub) {
             const imageHtml = sub.imagePath 
-                ? `<img src="${CONFIG.API_BASE_URL}${sub.imagePath}" alt="${sub.name}" class="event-image" onerror="this.src='images/eventbg0.jpg'">`
-                : `<img src="images/eventbg0.jpg" alt="${sub.name}" class="event-image">`;
+                            ? `<img src="${CONFIG.API_BASE_URL}${sub.imagePath}" alt="${sub.name}" class="event-image" loading="lazy" onerror="this.src='images/eventbg0.jpg'">`
+                            : `<img src="images/eventbg0.jpg" alt="${sub.name}" class="event-image" loading="lazy">`;
 
             let bookingSectionHtml = '';
             if (sub.bookedByCurrentUser) {
