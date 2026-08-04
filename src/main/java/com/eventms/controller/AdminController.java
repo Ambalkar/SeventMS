@@ -631,17 +631,14 @@ public class AdminController {
         g2d.drawImage(originalImage, 0, 0, targetWidth, targetHeight, srcX, srcY, srcX + srcWidth, srcY + srcHeight, null);
         g2d.dispose();
 
-        Path uploadDir = Paths.get(System.getProperty("user.dir"), "uploads", "images", "events");
-        Files.createDirectories(uploadDir);
-
-        String fileName = "event-" + System.currentTimeMillis() + "-" + java.util.UUID.randomUUID() + ".jpg";
-        Path target = uploadDir.resolve(fileName);
-
-        boolean written = ImageIO.write(resizedImage, "jpg", target.toFile());
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        boolean written = ImageIO.write(resizedImage, "jpg", baos);
         if (!written) {
-            throw new IOException("Failed to write image file.");
+            throw new IOException("Failed to encode image.");
         }
 
-        return "/images/events/" + fileName;
+        byte[] imageBytes = baos.toByteArray();
+        String base64Image = java.util.Base64.getEncoder().encodeToString(imageBytes);
+        return "data:image/jpeg;base64," + base64Image;
     }
 }

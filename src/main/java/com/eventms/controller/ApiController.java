@@ -410,7 +410,7 @@ public class ApiController {
         if (isBlank(path)) {
             return null;
         }
-        if (path.startsWith("http://") || path.startsWith("https://")) {
+        if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
             return path;
         }
         return request.getScheme() + "://" + request.getServerName()

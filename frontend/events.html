@@ -510,8 +510,9 @@
         }
 
         function renderEventCard(event) {
-            const imageHtml = event.imagePath 
-                ? `<img src="${CONFIG.API_BASE_URL}${event.imagePath}" alt="${event.name}" class="event-image" onerror="this.src='images/eventbg0.jpg'">`
+            const imageUrl = event.imageUrl || (event.imagePath ? (event.imagePath.startsWith('data:') ? event.imagePath : `${CONFIG.API_BASE_URL}${event.imagePath}`) : null);
+            const imageHtml = imageUrl
+                ? `<img src="${imageUrl}" alt="${event.name}" class="event-image" onerror="this.src='images/eventbg0.jpg'">`
                 : `<img src="images/eventbg0.jpg" alt="${event.name}" class="event-image">`;
 
             const kindLabel = event.eventType === 'MAJOR' ? 'Major Event' : 'Simple Event';
@@ -561,8 +562,9 @@
         }
 
         function renderSubEventCard(sub) {
-            const imageHtml = sub.imagePath 
-                ? `<img src="${CONFIG.API_BASE_URL}${sub.imagePath}" alt="${sub.name}" class="event-image" onerror="this.src='images/eventbg0.jpg'">`
+            const imageUrl = sub.imageUrl || (sub.imagePath ? (sub.imagePath.startsWith('data:') ? sub.imagePath : `${CONFIG.API_BASE_URL}${sub.imagePath}`) : null);
+            const imageHtml = imageUrl
+                ? `<img src="${imageUrl}" alt="${sub.name}" class="event-image" onerror="this.src='images/eventbg0.jpg'">`
                 : `<img src="images/eventbg0.jpg" alt="${sub.name}" class="event-image">`;
 
             let bookingSectionHtml = '';

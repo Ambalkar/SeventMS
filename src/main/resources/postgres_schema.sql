@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS events (
     current_guests INTEGER DEFAULT 0 CHECK (current_guests >= 0),
     event_type VARCHAR(20) NOT NULL DEFAULT 'SIMPLE',
     parent_event_id INTEGER REFERENCES events(event_id) ON DELETE CASCADE,
-    image_path VARCHAR(500),
+    image_path TEXT,
     CHECK (current_guests <= guest_limit)
 );;
 
