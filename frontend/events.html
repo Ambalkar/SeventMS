@@ -600,9 +600,25 @@
         }
 
         function renderBookingFormHtml(eventId) {
-            const defaultName = currentUser && currentUser.authenticated ? currentUser.name : '';
-            const defaultEmail = currentUser && currentUser.authenticated ? currentUser.email : '';
-            const readOnlyEmail = currentUser && currentUser.authenticated ? 'readonly style="background: rgba(255,255,255,0.05); color: #888;"' : '';
+            if (!currentUser || !currentUser.authenticated) {
+                return `
+                    <div class="booking-form">
+                        <div class="booking-form-title">
+                            <i class="fas fa-lock" style="color: var(--color-accent-gold);"></i> Sign in to book
+                        </div>
+                        <p style="margin:0 0 0.75rem; color: var(--color-text-secondary); font-size:0.95rem;">
+                            Please sign in to reserve a seat for this event.
+                        </p>
+                        <a href="login.html" class="btn btn-primary" style="display:inline-block; width:100%; text-align:center; text-decoration:none; min-height:38px; padding:0.5rem; font-size:0.9rem;">
+                            Sign In
+                        </a>
+                    </div>
+                `;
+            }
+
+            const defaultName = currentUser.name || '';
+            const defaultEmail = currentUser.email || '';
+            const readOnlyEmail = 'readonly style="background: rgba(255,255,255,0.05); color: #888;"';
 
             return `
                 <div class="booking-form">

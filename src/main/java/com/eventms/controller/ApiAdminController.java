@@ -416,6 +416,27 @@ public class ApiAdminController {
         }
     }
 
+    @DeleteMapping("/bookings/{id}")
+    public ResponseEntity<?> deleteBooking(@PathVariable("id") int id, HttpSession session) {
+        if (!isAdmin(session)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("success", false, "message", "Unauthorized."));
+        }
+
+        try (Connection conn = dataSource.getConnection()) {
+            String sql = "DELETE FROM bookings WHERE booking_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, id);
+                int deleted = ps.executeUpdate();
+                if (deleted == 0) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("success", false, "message", "Booking not found."));
+                }
+            }
+            return ResponseEntity.ok(Map.of("success", true, "message", "Participant booking deleted successfully."));
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success", false, "message", "Database error: " + e.getMessage()));
+        }
+    }
+
     private void ensureEventHierarchyColumns(Connection conn) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(
                 "ALTER TABLE events ADD COLUMN IF NOT EXISTS event_type VARCHAR(20) NOT NULL DEFAULT 'SIMPLE'")) {

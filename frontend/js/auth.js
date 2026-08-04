@@ -1,7 +1,7 @@
 // Intercept fetch requests globally to inject Bearer token automatically.
-(function() {
+(function () {
     const originalFetch = window.fetch;
-    window.fetch = async function(resource, init) {
+    window.fetch = async function (resource, init) {
         const token = localStorage.getItem("token");
         if (token) {
             init = init || {};
@@ -154,7 +154,7 @@ function renderNavbar(user) {
         logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             try {
-                await fetch(CONFIG.API_BASE_URL + '/api/auth/logout', { 
+                await fetch(CONFIG.API_BASE_URL + '/api/auth/logout', {
                     method: 'POST',
                     credentials: 'include'
                 });
