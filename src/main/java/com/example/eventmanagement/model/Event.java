@@ -43,7 +43,7 @@ public class Event {
     @Column(name = "parent_event_id")
     private Integer parentEventId;
 
-    @Column(name = "image_path")
+    @Column(name = "image_path", columnDefinition = "TEXT")
     private String imagePath;
 
     @Transient

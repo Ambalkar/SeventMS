@@ -378,8 +378,14 @@ public class UserController {
             ps.executeUpdate();
         }
         try (PreparedStatement ps = conn.prepareStatement(
-                "ALTER TABLE events ADD COLUMN IF NOT EXISTS image_path VARCHAR(500)")) {
+                "ALTER TABLE events ADD COLUMN IF NOT EXISTS image_path TEXT")) {
             ps.executeUpdate();
+        }
+        try (PreparedStatement ps = conn.prepareStatement(
+                "ALTER TABLE events ALTER COLUMN image_path TYPE TEXT")) {
+            ps.executeUpdate();
+        } catch (SQLException ignored) {
+            // Might fail if column doesn't exist yet or depending on DB dialect, but safe to ignore
         }
         try (PreparedStatement ps = conn.prepareStatement(
                 "ALTER TABLE bookings ADD COLUMN IF NOT EXISTS booking_type VARCHAR(20) NOT NULL DEFAULT 'SUB_EVENT'")) {
