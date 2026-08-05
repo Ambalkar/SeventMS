@@ -37,10 +37,22 @@ function createChatbotWidget() {
     let greeted = false;
 
     const menu = [
-        { label: 'View available events', query: 'View available events' },
-        { label: 'Login / register', query: 'Login / register' },
-        { label: 'View contract & policy details', query: 'View contract and policy details' },
-        { label: 'Contact support / about the developers', query: 'Contact support and about the developers' }
+        {
+            label: 'View available events',
+            answer: 'Here are a few ways I can help with events: browse upcoming events, check seats left, and open the event page to book. If you want, I can help you find a specific event next.'
+        },
+        {
+            label: 'Login / register',
+            answer: 'To book an event, please log in or create an account first. After that, return to the event page and continue booking.'
+        },
+        {
+            label: 'View contract & policy details',
+            answer: 'Here is a quick summary: terms and conditions cover platform use, privacy policy covers your booking data, and refunds or cancellations follow the event rules shown in the documentation page.'
+        },
+        {
+            label: 'Contact support / about the developers',
+            answer: 'For help, contact devendraambalkar11@gmail.com. You can also visit the documentation page for developer and project details.'
+        }
     ];
 
     toggle.addEventListener('click', () => {
@@ -75,9 +87,14 @@ function createChatbotWidget() {
             button.type = 'button';
             button.className = 'chatbot-quick-reply';
             button.textContent = item.label;
-            button.addEventListener('click', () => sendQuery(item.query));
+            button.addEventListener('click', () => sendLocalAnswer(item.label, item.answer));
             quickReplies.appendChild(button);
         });
+    }
+
+    function sendLocalAnswer(question, answer) {
+        appendMessage('user', question);
+        appendMessage('assistant', answer);
     }
 
     async function sendQuery(question) {
