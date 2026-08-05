@@ -50,6 +50,9 @@ public class KnowledgeService {
         if (isGreeting(normalized)) {
             return greeting();
         }
+        if (looksLikeEventSearch(normalized)) {
+            return "I can help you find an event. Are you looking for music, workshops, seminars, or something else?";
+        }
         if (normalized.contains("event") || normalized.contains("browse") || normalized.contains("available")) {
             return summarizeLiveEvents();
         }
@@ -110,7 +113,7 @@ public class KnowledgeService {
                 });
 
         if (rows.isEmpty()) {
-            return "I couldn't find any live events right now. Please check again later or contact support at " + supportEmail + ".";
+            return "I couldn't find any live events right now. Please try again later or contact support at " + supportEmail + ".";
         }
 
         StringBuilder message = new StringBuilder("Here are a few upcoming events:\n");
@@ -131,23 +134,16 @@ public class KnowledgeService {
         if (isAuthenticated) {
             return "You are already signed in, so you can browse events and continue booking. If you want, I can help you find an event next.";
         }
-        return "To book an event, please log in or create an account first. After that, come back to the event page and continue booking.";
+        return "To reserve tickets, you'll first need to sign in. Once you're logged in, I'll guide you through booking.";
     }
 
     private String policySummary() {
-            return "Here's a quick summary:\n"
-                + "- Terms and conditions: use the platform responsibly.\n"
-                + "- Privacy policy: your booking details are used only for event management.\n"
-                + "- Refund and cancellation: follow the event-specific rules shown in the documentation page.\n"
-                + "- Organizer agreement: organizers manage event details and capacity.\n"
-                + "- User responsibilities: provide accurate booking information and keep your login secure.\n"
-                + "You can read the full details on the documentation page.";
+            return "Here is a simple summary: terms cover platform use, privacy covers your booking data, and refunds or cancellations follow the event rules shown in the documentation page. If you want, I can point you to the full policy next.";
     }
 
     private String contactInfo() {
         String websitePart = websiteUrl == null || websiteUrl.isBlank() ? "the platform website" : websiteUrl;
-        return "For help, contact " + supportEmail + ". You can also visit " + websitePart + " for the latest platform details.\n"
-                + "This platform is maintained by the SEVENT-MS development team led by Devendra Ambalkar.";
+        return "For help, contact " + supportEmail + ". You can also visit " + websitePart + " for the latest platform details. This platform is maintained by the SEVENT-MS development team led by Devendra Ambalkar.";
     }
 
     private boolean isGreeting(String normalizedQuery) {
@@ -157,6 +153,15 @@ public class KnowledgeService {
                 || normalizedQuery.contains("good morning")
                 || normalizedQuery.contains("good afternoon")
                 || normalizedQuery.contains("good evening");
+    }
+
+    private boolean looksLikeEventSearch(String normalizedQuery) {
+        return normalizedQuery.contains("i want to attend")
+                || normalizedQuery.contains("i want to go")
+                || normalizedQuery.contains("find an event")
+                || normalizedQuery.contains("recommend")
+                || normalizedQuery.contains("something this weekend")
+                || normalizedQuery.contains("what should i attend");
     }
 
     private List<ProjectKnowledge.FileContent> readTextFiles() {

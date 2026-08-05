@@ -37,22 +37,10 @@ function createChatbotWidget() {
     let greeted = false;
 
     const menu = [
-        {
-            label: 'View available events',
-            answer: 'Here are a few ways I can help with events: browse upcoming events, check seats left, and open the event page to book. If you want, I can help you find a specific event next.'
-        },
-        {
-            label: 'Login / register',
-            answer: 'To book an event, please log in or create an account first. After that, return to the event page and continue booking.'
-        },
-        {
-            label: 'View contract & policy details',
-            answer: 'Here is a quick summary: terms and conditions cover platform use, privacy policy covers your booking data, and refunds or cancellations follow the event rules shown in the documentation page.'
-        },
-        {
-            label: 'Contact support / about the developers',
-            answer: 'For help, contact devendraambalkar11@gmail.com. You can also visit the documentation page for developer and project details.'
-        }
+        { label: 'View available events', intent: 'VIEW_EVENTS', buttonId: 'view_events' },
+        { label: 'Login / register', intent: 'LOGIN_REGISTER', buttonId: 'login_register' },
+        { label: 'View contract & policy details', intent: 'POLICY_DETAILS', buttonId: 'policy_details' },
+        { label: 'Contact support / about the developers', intent: 'CONTACT_SUPPORT', buttonId: 'contact_support' }
     ];
 
     toggle.addEventListener('click', () => {
@@ -87,28 +75,26 @@ function createChatbotWidget() {
             button.type = 'button';
             button.className = 'chatbot-quick-reply';
             button.textContent = item.label;
-            button.addEventListener('click', () => sendLocalAnswer(item.label, item.answer));
+            button.addEventListener('click', () => sendQuery(item.label, item.intent, item.buttonId));
             quickReplies.appendChild(button);
         });
     }
 
-    function sendLocalAnswer(question, answer) {
-        appendMessage('user', question);
-        appendMessage('assistant', answer);
-    }
-
-    async function sendQuery(question) {
+    async function sendQuery(question, intent, buttonId) {
         appendMessage('user', question);
         input.value = '';
         appendMessage('system', 'Searching the project knowledge base...');
         try {
+            const body = { query: question };
+            if (intent) body.intent = intent;
+            if (buttonId) body.buttonId = buttonId;
             const response = await fetch(CHATBOT_API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 credentials: 'include',
-                body: JSON.stringify({ query: question })
+                body: JSON.stringify(body)
             });
             const contentType = response.headers.get('content-type') || '';
             const payload = contentType.includes('application/json') ? await response.json() : null;
@@ -130,8 +116,8 @@ function createChatbotWidget() {
             appendMessage('assistant', payload && payload.message ? payload.message : 'I could not answer that right now.');
         } catch (error) {
             removeLastSystemMessage();
-            appendMessage('assistant', 'I could not reach the chatbot service. Please try again later or use the quick buttons above.');
-            console.error('Chatbot error:', error);
+                appendMessage('assistant', 'I could not reach the chatbot service right now. Please try again later, or use the quick buttons above.');
+                console.error('Chatbot error:', error);
         }
     }
 

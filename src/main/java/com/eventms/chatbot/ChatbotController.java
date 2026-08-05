@@ -29,7 +29,8 @@ public class ChatbotController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ChatbotResponse.error("Ask a question so I can help you."));
         }
-        ChatbotResponse response = chatbotService.answer(request.getQuery().trim(), session);
+        request.setQuery(request.getQuery().trim());
+        ChatbotResponse response = chatbotService.answer(request, session);
         return ResponseEntity.ok(response);
     }
 }

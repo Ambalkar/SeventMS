@@ -33,6 +33,7 @@ com\eventms\config\DatabaseUrlResolver.class
 com\eventms\auth\TokenStore$UserInfo.class
 com\eventms\controller\UserController$BookingPlan.class
 com\example\eventmanagement\model\Event.class
+com\eventms\chatbot\ChatbotService$1.class
 com\eventms\controller\AdminController.class
 com\eventms\EventManagementSystemApplication.class
 com\example\eventmanagement\model\Participation.class
