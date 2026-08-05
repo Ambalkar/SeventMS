@@ -116,6 +116,30 @@
     font-style: italic;
 }
 
+.chatbot-quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0 1rem 0.75rem;
+}
+
+.chatbot-quick-reply {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+    padding: 0.55rem 0.8rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+.chatbot-quick-reply:hover {
+    transform: translateY(-1px);
+    background: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.35);
+}
+
 .chatbot-form {
     display: grid;
     grid-template-columns: 1fr auto;

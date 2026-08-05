@@ -17,6 +17,7 @@ function createChatbotWidget() {
             </div>
             <div id="chatbot-body">
                 <div id="chatbot-messages" class="chatbot-messages"></div>
+                <div id="chatbot-quick-replies" class="chatbot-quick-replies" aria-label="Quick replies"></div>
                 <form id="chatbot-form" class="chatbot-form">
                     <input id="chatbot-input" type="text" placeholder="Ask about events, login, booking, or support" autocomplete="off" />
                     <button type="submit">Send</button>
@@ -32,7 +33,15 @@ function createChatbotWidget() {
     const form = document.getElementById('chatbot-form');
     const input = document.getElementById('chatbot-input');
     const messages = document.getElementById('chatbot-messages');
+    const quickReplies = document.getElementById('chatbot-quick-replies');
     let greeted = false;
+
+    const menu = [
+        { label: 'View available events', query: 'View available events' },
+        { label: 'Login / register', query: 'Login / register' },
+        { label: 'View contract & policy details', query: 'View contract and policy details' },
+        { label: 'Contact support / about the developers', query: 'Contact support and about the developers' }
+    ];
 
     toggle.addEventListener('click', () => {
         const isOpen = panel.classList.toggle('open');
@@ -40,7 +49,8 @@ function createChatbotWidget() {
         if (isOpen) {
             input.focus();
             if (!greeted) {
-                appendMessage('assistant', 'Hi there! Welcome to SeventMS. I can help you browse events, explain login and booking, show policy details, or share support info. Try one of these:\n1. View available events\n2. Login / register\n3. View contract & policy details\n4. Contact support / about the developers');
+                appendMessage('assistant', 'Hi there! Welcome to SeventMS. I can help you browse events, explain login and booking, show policy details, or share support info.');
+                renderQuickReplies();
                 greeted = true;
             }
         }
@@ -55,6 +65,22 @@ function createChatbotWidget() {
         event.preventDefault();
         const question = input.value.trim();
         if (!question) return;
+        await sendQuery(question);
+    });
+
+    function renderQuickReplies() {
+        quickReplies.innerHTML = '';
+        menu.forEach(item => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'chatbot-quick-reply';
+            button.textContent = item.label;
+            button.addEventListener('click', () => sendQuery(item.query));
+            quickReplies.appendChild(button);
+        });
+    }
+
+    async function sendQuery(question) {
         appendMessage('user', question);
         input.value = '';
         appendMessage('system', 'Searching the project knowledge base...');
@@ -67,22 +93,30 @@ function createChatbotWidget() {
                 credentials: 'include',
                 body: JSON.stringify({ query: question })
             });
-            const payload = await response.json();
+            const contentType = response.headers.get('content-type') || '';
+            const payload = contentType.includes('application/json') ? await response.json() : null;
             removeLastSystemMessage();
+
+            if (!response.ok) {
+                appendMessage('assistant', payload && payload.message ? payload.message : 'I could not answer that right now.');
+                return;
+            }
+
             if (payload && payload.success) {
                 appendMessage('assistant', payload.answer);
                 if (payload.references && payload.references.length) {
                     appendMessage('assistant', renderReferences(payload.references));
                 }
-            } else {
-                appendMessage('assistant', payload.message || 'I could not answer that right now.');
+                return;
             }
+
+            appendMessage('assistant', payload && payload.message ? payload.message : 'I could not answer that right now.');
         } catch (error) {
             removeLastSystemMessage();
-            appendMessage('assistant', 'Chatbot request failed. Please try again later.');
+            appendMessage('assistant', 'I could not reach the chatbot service. Please try again later or use the quick buttons above.');
             console.error('Chatbot error:', error);
         }
-    });
+    }
 
     function appendMessage(role, text) {
         const message = document.createElement('div');
