@@ -25,4 +25,8 @@ services:
         value: always
       - key: SPRING_SQL_INIT_SCHEMA_LOCATIONS
         value: classpath:postgres_schema.sql
+      - key: GEMINI_API_KEY
+        value: ""
+
+      # Set GEMINI_API_KEY in Render dashboard or secrets manager, not in source control.
     autoDeploy: true
