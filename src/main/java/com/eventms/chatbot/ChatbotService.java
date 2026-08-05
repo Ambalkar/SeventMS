@@ -29,8 +29,9 @@ public class ChatbotService {
         ProjectKnowledge knowledge = knowledgeService.loadKnowledge();
         String userRole = securityService.getRole(session);
         boolean isAdmin = "ADMIN".equalsIgnoreCase(userRole);
+        boolean isAuthenticated = !"ANONYMOUS".equalsIgnoreCase(userRole);
 
-        String responseText = knowledgeService.queryKnowledge(query, knowledge, isAdmin);
+        String responseText = knowledgeService.queryKnowledge(query, knowledge, isAdmin, isAuthenticated);
         List<SourceReference> references = knowledgeService.findReferences(query, knowledge);
 
         if (geminiService.isEnabled()) {

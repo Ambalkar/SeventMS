@@ -18,7 +18,7 @@ function createChatbotWidget() {
             <div id="chatbot-body">
                 <div id="chatbot-messages" class="chatbot-messages"></div>
                 <form id="chatbot-form" class="chatbot-form">
-                    <input id="chatbot-input" type="text" placeholder="Ask about events, bookings, or admin" autocomplete="off" />
+                    <input id="chatbot-input" type="text" placeholder="Ask about events, login, booking, or support" autocomplete="off" />
                     <button type="submit">Send</button>
                 </form>
             </div>
@@ -32,12 +32,17 @@ function createChatbotWidget() {
     const form = document.getElementById('chatbot-form');
     const input = document.getElementById('chatbot-input');
     const messages = document.getElementById('chatbot-messages');
+    let greeted = false;
 
     toggle.addEventListener('click', () => {
         const isOpen = panel.classList.toggle('open');
         panel.setAttribute('aria-hidden', String(!isOpen));
         if (isOpen) {
             input.focus();
+            if (!greeted) {
+                appendMessage('assistant', 'Hi there! Welcome to SeventMS. I can help you browse events, explain login and booking, show policy details, or share support info. Try one of these:\n1. View available events\n2. Login / register\n3. View contract & policy details\n4. Contact support / about the developers');
+                greeted = true;
+            }
         }
     });
 
