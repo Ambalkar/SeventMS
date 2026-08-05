@@ -1,12 +1,16 @@
 #chatbot-widget {
-    position: fixed;
-    right: 1.25rem;
-    bottom: 1.25rem;
-    z-index: 9999;
+    position: fixed !important;
+    right: 1.25rem !important;
+    bottom: 1.25rem !important;
+    left: auto !important;
+    top: auto !important;
+    z-index: 999999 !important;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     font-family: 'Poppins', sans-serif;
+    margin: 0 !important;
+    padding: 0;
 }
 
 #chatbot-toggle {
